@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kuis Tebak Komponen Komputer - Flashcard Interaktif</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <style>
+    .perspective-1200 {
+      perspective: 1200px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    /* Custom scrollbar for answer details */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.4);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.8);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans selection:bg-indigo-500 selection:text-white">
+
+  <header class="py-3.5 px-4 sm:px-8 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 shadow-sm">
+    <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+          <i class="fa-solid fa-microchip text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white leading-tight">Flashcard Hardware PC</h1>
+          <p class="text-xs text-slate-400">Media Tebak Visual Komponen Komputer</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btnHintToggle" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-amber-300 text-xs font-medium rounded-lg border border-slate-700/80 transition active:scale-95 shadow-sm" title="Tampilkan petunjuk singkat untuk siswa">
+          <i class="fa-regular fa-lightbulb"></i>
+          <span id="hintBtnLabel">Beri Petunjuk</span>
+        </button>
+
+        <button id="btnShuffle" class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-indigo-300 text-xs font-medium rounded-lg border border-slate-700/80 transition active:scale-95 shadow-sm" title="Acak urutan komponen">
+          <i class="fa-solid fa-shuffle"></i>
+          <span class="hidden sm:inline">Acak Urutan</span>
+        </button>
+
+        <button id="btnFullscreen" class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md shadow-indigo-600/25 transition active:scale-95" title="Tampilan layar penuh untuk proyektor kelas">
+          <i class="fa-solid fa-expand" id="fullscreenIcon"></i>
+          <span class="hidden md:inline">Layar Penuh</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl w-full mx-auto px-4 py-4 sm:py-6 flex-1 flex flex-col justify-center items-center">
+
+    <!-- Card Metadata & Hint Bar -->
+    <div class="w-full max-w-xl flex flex-col gap-2 mb-3">
+      <div class="flex items-center justify-between text-xs sm:text-sm font-medium text-slate-400">
+        <span id="cardCounter" class="bg-slate-900 border border-slate-800 text-indigo-400 font-semibold px-3 py-1 rounded-full shadow-inner">
+          Kartu 1 dari 11
+        </span>
+        <span class="flex items-center gap-1.5 text-slate-400 text-xs">
+          <i class="fa-regular fa-hand-pointer text-indigo-400 animate-pulse"></i> Klik kartu atau tombol untuk membalik
+        </span>
+      </div>
+
+      <!-- Pop-up clue bar -->
+      <div id="hintContainer" class="hidden bg-amber-950/40 border border-amber-800/50 rounded-xl p-3 text-xs text-amber-200 animate-fadeIn">
+        <div class="flex items-start gap-2">
+          <i class="fa-solid fa-circle-question text-amber-400 mt-0.5"></i>
+          <div>
+            <span class="font-bold text-amber-300 block mb-0.5">Petunjuk Guru untuk Siswa:</span>
+            <p id="hintText" class="text-amber-100/90 leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full max-w-xl h-[420px] sm:h-[470px] perspective-1200 cursor-pointer select-none" id="cardContainer">
+      <div id="cardInner" class="relative w-full h-full transform-style-3d transition-transform duration-500 rounded-3xl shadow-2xl">
+        
+        <!-- SISI DEPAN: HANYA GAMBAR (Untuk Ditebak Siswa) -->
+        <div class="absolute inset-0 w-full h-full backface-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-2 border-slate-800/90 rounded-3xl flex flex-col items-center justify-between p-5 sm:p-7 overflow-hidden group hover:border-indigo-500/50 transition-colors shadow-indigo-950/30">
+          
+          <!-- Header kartu depan -->
+          <div class="w-full flex items-center justify-between text-xs text-slate-400 border-b border-slate-800/80 pb-2.5">
+            <span class="flex items-center gap-1.5 font-medium text-indigo-400">
+              <i class="fa-solid fa-camera-retro"></i> Tebak Nama & Fungsi
+            </span>
+            <span class="text-slate-500 text-[11px] bg-slate-950/80 px-2.5 py-0.5 rounded-full border border-slate-800">
+              Hardware PC
+            </span>
+          </div>
+          
+          <!-- Bingkai Foto Komponen -->
+          <div class="w-full flex-1 my-3 flex items-center justify-center relative rounded-2xl bg-slate-950/90 border border-slate-800/80 p-4 overflow-hidden">
+            <!-- Spinner Pemuat Gambar -->
+            <div id="imgLoader" class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-950 text-slate-500">
+              <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500"></i>
+              <span class="text-xs">Memuat visual hardware...</span>
+            </div>
+            
+            <img id="cardImage" 
+                 src="" 
+                 alt="Komponen Komputer" 
+                 class="max-h-full max-w-full object-contain rounded-xl drop-shadow-2xl transition duration-500 group-hover:scale-105"
+                 onload="document.getElementById('imgLoader').classList.add('hidden')"
+                 onerror="handleImageFallback(this)">
+          </div>
+
+          <!-- Footer kartu depan -->
+          <div class="w-full flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
+            <span class="text-slate-400 flex items-center gap-1 text-[11px]">
+              <i class="fa-solid fa-microphone-lines text-indigo-400"></i> Waktunya siswa menjelaskan!
+            </span>
+            <span class="text-indigo-400 font-semibold text-xs flex items-center gap-1">
+              Buka Jawaban <i class="fa-solid fa-arrow-rotate-right text-[10px]"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- SISI BELAKANG: JAWABAN LENGKAP & FUNGSI -->
+        <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-gradient-to-br from-indigo-950/95 via-slate-900 to-slate-950 border-2 border-indigo-500/70 rounded-3xl p-5 sm:p-7 flex flex-col justify-between overflow-y-auto custom-scrollbar shadow-2xl">
+          
+          <div>
+            <!-- Label Status -->
+            <div class="flex items-center justify-between pb-3 border-b border-indigo-500/30">
+              <span class="text-[11px] uppercase tracking-wider font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-700/40 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-check"></i> Kunci Penjelasan
+              </span>
+              <span id="badgeCategory" class="text-xs text-indigo-300 font-mono bg-indigo-900/40 px-2.5 py-0.5 rounded border border-indigo-800/50"></span>
+            </div>
+
+            <!-- Nama & Singkatan Hardware -->
+            <div class="mt-4">
+              <h2 id="cardTitle" class="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-snug"></h2>
+              <p id="cardAltName" class="text-xs sm:text-sm text-indigo-300 mt-0.5 font-medium italic"></p>
+            </div>
+
+            <!-- Box Fungsi Pokok -->
+            <div class="mt-4 bg-slate-900/90 p-4 rounded-2xl border border-slate-800 shadow-inner">
+              <h3 class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-gears"></i> Fungsi Utama:
+              </h3>
+              <p id="cardDesc" class="text-slate-200 text-xs sm:text-sm leading-relaxed"></p>
+            </div>
+
+            <!-- Box Ciri Khas Fisik -->
+            <div class="mt-3 bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-900/40">
+              <h3 class="text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-magnifying-glass"></i> Ciri Fisik Identifikasi:
+              </h3>
+              <p id="cardFeature" class="text-slate-300 text-xs sm:text-xs leading-relaxed"></p>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-indigo-950 text-center">
+            <span class="text-xs text-slate-400 bg-slate-900/80 px-3.5 py-1 rounded-full border border-slate-800">
+              Klik di mana saja pada kartu untuk menutup kembali
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="w-full max-w-xl flex items-center justify-between gap-3 mt-5">
+      <button id="btnPrev" class="flex-1 py-2.5 sm:py-3 px-3 sm:px-4 bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium rounded-xl border border-slate-800 flex items-center justify-center gap-2 transition active:scale-95 shadow-sm text-xs sm:text-sm">
+        <i class="fa-solid fa-chevron-left"></i>
+        <span>Sebelumnya</span>
+      </button>
+
+      <button id="btnFlip" class="flex-[1.4] py-2.5 sm:py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition active:scale-95 text-xs sm:text-sm">
+        <i class="fa-solid fa-repeat"></i>
+        <span id="flipBtnText">Buka Kunci Jawaban</span>
+      </button>
+
+      <button id="btnNext" class="flex-1 py-2.5 sm:py-3 px-3 sm:px-4 bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium rounded-xl border border-slate-800 flex items-center justify-center gap-2 transition active:scale-95 shadow-sm text-xs sm:text-sm">
+        <span>Berikutnya</span>
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Quick Pagination Buttons (1 - 11) -->
+    <div class="w-full max-w-xl mt-5 pt-3.5 border-t border-slate-800/80">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Lompat Langsung ke Kartu:</span>
+        <span class="text-[11px] text-slate-500 font-mono">Total: 11 Komponen</span>
+      </div>
+      <div id="dotGrid" class="flex flex-wrap gap-1.5 sm:gap-2"></div>
+    </div>
+
+  </main>
+
+  <footer class="py-3 px-4 text-center text-xs text-slate-500 border-t border-slate-900 bg-slate-950">
+    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+      <span>Shortcut Keyboard:</span>
+      <span><kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono text-[11px]">Spasi</kbd> Balik Kartu</span>
+      <span><kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono text-[11px]">&larr;</kbd> Kartu Sebelumnya</span>
+      <span><kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300 font-mono text-[11px]">&rarr;</kbd> Kartu Selanjutnya</span>
+    </div>
+  </footer>
+
+  <script>
+    // 11 Komponen Komputer Spesifik
+    const hardwareList = [
+      {
+        id: 1,
+        name: "SSD (Solid State Drive)",
+        alt: "Solid State Drive - Flash-based Storage",
+        category: "Media Penyimpanan Cepat",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/SSD_SATA_e_adattatore.jpg/800px-SSD_SATA_e_adattatore.jpg",
+        hint: "Penyimpan data modern yang tidak memiliki piringan mekanis berputar. Memakai chip flash NAND berkecepatan transfer sangat tinggi.",
+        desc: "Media penyimpanan sekunder non-volatil yang menyimpan sistem operasi, aplikasi, dan file berkas. Jauh lebih cepat, hening, dan tahan guncangan dibandingkan harddisk konvensional.",
+        feature: "Berbentuk kotak tipis ukuran 2.5 inci berbalut casing metal/plastik (atau berupa kepingan modul stik M.2 NVMe)."
+      },
+      {
+        id: 2,
+        name: "Harddisk (HDD)",
+        alt: "Hard Disk Drive - Magnetic Storage",
+        category: "Media Penyimpanan Sekunder",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Open_hard-drive.jpg/800px-Open_hard-drive.jpg",
+        hint: "Penyimpan data berkapasitas besar dengan piringan logam berputar (platter) di dalamnya serta jarum pembaca magnetis.",
+        desc: "Menyimpan data digital secara permanen dengan memanfaatkan sifat magnetik piringan yang berputar pada kecepatan ribuan RPM (5400 atau 7200 RPM) dan dibaca oleh actuator arm.",
+        feature: "Fisik tebal, bermassa cukup berat, memiliki lubang ventilasi breather hole, serta mengeluarkan bunyi dan getaran mekanik saat beroperasi."
+      },
+      {
+        id: 3,
+        name: "RAM (Random Access Memory)",
+        alt: "Main System Memory - Volatile",
+        category: "Memori Utama (Sementara)",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Swissbit_2GB_PC2-6400_DDR2_240-pin_DIMM.jpg/800px-Swissbit_2GB_PC2-6400_DDR2_240-pin_DIMM.jpg",
+        hint: "Kepingan papan sirkuit panjang pipih dengan deretan chip memori. Menyimpan data program yang sedang aktif dijalankan secara sementara.",
+        desc: "Menyediakan ruang kerja penyimpanan data sementara berkecepatan tinggi bagi CPU saat aplikasi berjalan. Semua data di dalamnya akan terhapus otomatis saat komputer dimatikan (volatil).",
+        feature: "Keping PCB panjang dengan deretan pin kontak emas di bagian bawahnya dan memiliki celah pembatas (notch) penentu generasi DDR."
+      },
+      {
+        id: 4,
+        name: "ROM (Read Only Memory / BIOS Chip)",
+        alt: "Firmware Flash Memory IC",
+        category: "Penyimpan Firmware Booting",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Intel_Flash_ROM.jpg/800px-Intel_Flash_ROM.jpg",
+        hint: "Chip terpadu (IC) kecil di motherboard yang berisi instruksi awal sistem (BIOS/UEFI) agar PC bisa melakukan booting pertama kali.",
+        desc: "Menyimpan firmware dasar (BIOS/UEFI) dan program POST (Power-On Self-Test) yang memeriksa kesiapan seluruh perangkat keras sebelum sistem operasi mulai dimuat.",
+        feature: "Berupa chip IC hitam berbentuk persegi atau persegi panjang berkaki pin kecil yang menempel paten atau pada soket mini motherboard."
+      },
+      {
+        id: 5,
+        name: "Heatsink / CPU Cooler",
+        alt: "Thermal Management / Heat Dissipation",
+        category: "Sistem Pendingin Termal",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/PC_Heatsink_with_fan.jpg/800px-PC_Heatsink_with_fan.jpg",
+        hint: "Bongkahan sirip-sirip logam aluminium/tembaga yang dipasang persis di atas processor untuk membuang hawa panas berlebih.",
+        desc: "Menyerap panas dari permukaan prosesor melalui bidang dasar konduktif dan menyebarkannya ke sirip-sirip logam tipis untuk kemudian dihembuskan keluar oleh kipas pendingin.",
+        feature: "Terdiri dari deretan kisi-kisi logam sirip yang sangat rapat, pipa kalor tembaga (heatpipes), serta kipas pendingin fan di atasnya."
+      },
+      {
+        id: 6,
+        name: "VGA Card (GPU)",
+        alt: "Graphics Processing Unit / Video Card",
+        category: "Pemroses Grafis & Visual",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Nvidia_Geforce_GTX_1080_Ti_Founders_Edition.jpg/800px-Nvidia_Geforce_GTX_1080_Ti_Founders_Edition.jpg",
+        hint: "Papan ekspansi besar berpendingin kipas ganda/tripel yang mengolah grafis game, render 3D, dan mengeluarkan gambar ke monitor.",
+        desc: "Memproses dan merender data grafis, efek visual, pemodelan 3D, serta video berkekuatan tinggi agar dapat ditampilkan ke layar monitor secara lancar.",
+        feature: "Kartu sirkuit besar dengan soket PCIe x16, kipas pendingin besar, pelat pendingin tebal, serta memiliki port video (HDMI, DisplayPort) di braket belakangnya."
+      },
+      {
+        id: 7,
+        name: "Processor (CPU)",
+        alt: "Central Processing Unit - Brain of the Computer",
+        category: "Unit Pemroses Pusat (Otak)",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Intel_Core_i7_8700K_top.jpg/800px-Intel_Core_i7_8700K_top.jpg",
+        hint: "Sering dijuluki 'Otak Komputer'. Bentuknya lempeng persegi kecil yang terpasang tepat di bawah pendingin heatsink.",
+        desc: "Mengontrol jalannya seluruh sistem komputer, menjalankan instruksi algoritma perangkat lunak, serta melakukan operasi perhitungan aritmatika dan logika (ALU).",
+        feature: "Keping lempeng logam persegi dengan penutup pelindung panas (IHS) di atasnya dan ribuan titik kontak emas/pin di bagian bawahnya."
+      },
+      {
+        id: 8,
+        name: "Motherboard (Mainboard)",
+        alt: "Printed Circuit Board (PCB) Utama",
+        category: "Papan Sirkuit Induk",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Gigabyte_GA-970A-UD3_motherboard.jpg/800px-Gigabyte_GA-970A-UD3_motherboard.jpg",
+        hint: "Papan sirkuit paling besar di dalam casing PC tempat semua komponen (CPU, RAM, GPU, penyimpanan) ditancapkan.",
+        desc: "Sebagai tulang punggung yang menyediakan jalur komunikasi elektrik (bus data) serta mendistribusikan daya listrik agar seluruh komponen PC saling terhubung dan bekerja serempak.",
+        feature: "Papan sirkuit lebar dengan soket prosesor di tengah, slot RAM, slot ekspansi PCIe, deretan port I/O belakang, dan konektor kabel daya."
+      },
+      {
+        id: 9,
+        name: "LAN Card (NIC)",
+        alt: "Network Interface Card / Ethernet Adapter",
+        category: "Kartu Komunikasi Jaringan",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/PCI_Gigabit_Ethernet_Controller.jpg/800px-PCI_Gigabit_Ethernet_Controller.jpg",
+        hint: "Kartu adapter dengan lubang colokan port kabel RJ-45 untuk menghubungkan komputer ke jaringan internet kabel (LAN).",
+        desc: "Mengonversi aliran data paralel komputer menjadi sinyal serial untuk ditransmisikan melalui kabel jaringan Ethernet menuju switch, router, atau modem internet.",
+        feature: "Kartu kecil dengan konektor PCIe di bagian bawah dan port kabel RJ-45 dilengkapi lampu indikator LED hijau/oranye di bagian panel logamnya."
+      },
+      {
+        id: 10,
+        name: "Power Supply Unit (PSU)",
+        alt: "Unit Catu Daya Listrik",
+        category: "Penyuplai Daya Listrik",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/ATX_Power_Supply.jpg/800px-ATX_Power_Supply.jpg",
+        hint: "Kotak logam tempat colokan kabel listrik utama dari stopkontak dinding, menyalurkan listrik ke semua komponen komputer.",
+        desc: "Mengonversi arus bolak-balik (AC 220V) dari stopkontak PLN menjadi tegangan searah (DC) voltase rendah (+12V, +5V, +3.3V) yang stabil dan aman bagi sirkuit PC.",
+        feature: "Kotak logam bersegi dengan kipas ventilasi besar, saklar on/off di dekat colokan stopkontak, dan berkas untaian kabel daya warna-warni keluar."
+      },
+      {
+        id: 11,
+        name: "Baterai CMOS (CR2032)",
+        alt: "Complementary Metal-Oxide Semiconductor Battery",
+        category: "Daya Cadangan RTC & BIOS",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/CR2032_lithium_battery.jpg/800px-CR2032_lithium_battery.jpg",
+        hint: "Baterai kancing bulat pipih mengilap yang terpasang di motherboard untuk menjaga jam dan pengaturan BIOS tidak hilang saat PC mati.",
+        desc: "Menyuplai daya listrik berkelanjutan ke chip Real-Time Clock (RTC) dan memori CMOS agar jam, tanggal, serta konfigurasi settingan BIOS/UEFI tidak ter-reset ketika komputer tidak terhubung ke listrik.",
+        feature: "Baterai koin logam tipis bundar berkode umum CR2032 dengan voltase 3 Volt yang duduk di soket klip bundar motherboard."
+      }
+    ];
+
+    let deck = [...hardwareList];
+    let currentIndex = 0;
+    let isFlipped = false;
+    let isHintOpen = false;
+
+    // DOM References
+    const cardInner = document.getElementById('cardInner');
+    const cardContainer = document.getElementById('cardContainer');
+    const cardImage = document.getElementById('cardImage');
+    const cardTitle = document.getElementById('cardTitle');
+    const cardAltName = document.getElementById('cardAltName');
+    const cardDesc = document.getElementById('cardDesc');
+    const cardFeature = document.getElementById('cardFeature');
+    const badgeCategory = document.getElementById('badgeCategory');
+    const cardCounter = document.getElementById('cardCounter');
+    const flipBtnText = document.getElementById('flipBtnText');
+    const dotGrid = document.getElementById('dotGrid');
+    const imgLoader = document.getElementById('imgLoader');
+    const hintContainer = document.getElementById('hintContainer');
+    const hintText = document.getElementById('hintText');
+    const hintBtnLabel = document.getElementById('hintBtnLabel');
+
+    // Controls
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnFlip = document.getElementById('btnFlip');
+    const btnShuffle = document.getElementById('btnShuffle');
+    const btnHintToggle = document.getElementById('btnHintToggle');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const fullscreenIcon = document.getElementById('fullscreenIcon');
+
+    function renderCard(animate = true) {
+      // Pastikan kartu kembali ke sisi depan setiap kali berpindah
+      if (isFlipped) {
+        if (animate) {
+          toggleFlip();
+        } else {
+          isFlipped = false;
+          cardInner.classList.remove('rotate-y-180');
+          flipBtnText.innerText = "Buka Kunci Jawaban";
+        }
+      }
+
+      // Sembunyikan hint jika ganti soal
+      isHintOpen = false;
+      hintContainer.classList.add('hidden');
+      hintBtnLabel.innerText = "Beri Petunjuk";
+
+      const currentItem = deck[currentIndex];
+
+      // Muat gambar
+      imgLoader.classList.remove('hidden');
+      cardImage.src = currentItem.image;
+      cardImage.alt = currentItem.name;
+
+      // Isi Data Kunci Jawaban
+      cardTitle.innerText = currentItem.name;
+      cardAltName.innerText = currentItem.alt;
+      badgeCategory.innerText = currentItem.category;
+      cardDesc.innerText = currentItem.desc;
+      cardFeature.innerText = currentItem.feature;
+      hintText.innerText = currentItem.hint;
+
+      // Update Label Counter
+      cardCounter.innerText = `Kartu ${currentIndex + 1} dari ${deck.length}`;
+
+      updatePaginationButtons();
+    }
+
+    // Toggle Balik Kartu
+    function toggleFlip() {
+      isFlipped = !isFlipped;
+      if (isFlipped) {
+        cardInner.classList.add('rotate-y-180');
+        flipBtnText.innerText = "Tutup Kunci Jawaban";
+      } else {
+        cardInner.classList.remove('rotate-y-180');
+        flipBtnText.innerText = "Buka Kunci Jawaban";
+      }
+    }
+
+    // Toggle Petunjuk Guru
+    function toggleHint() {
+      isHintOpen = !isHintOpen;
+      if (isHintOpen) {
+        hintContainer.classList.remove('hidden');
+        hintBtnLabel.innerText = "Tutup Petunjuk";
+      } else {
+        hintContainer.classList.add('hidden');
+        hintBtnLabel.innerText = "Beri Petunjuk";
+      }
+    }
+
+    // Algoritma Pengacakan Kartu (Fisher-Yates)
+    function shuffleDeck() {
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      currentIndex = 0;
+      renderCard(false);
+      buildPaginationButtons();
+    }
+
+    // Image fallback jika koneksi terputus
+    function handleImageFallback(imgElement) {
+      imgLoader.classList.add('hidden');
+      imgElement.src = "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=700&auto=format&fit=crop&q=80";
+    }
+
+    function buildPaginationButtons() {
+      dotGrid.innerHTML = '';
+      deck.forEach((_, idx) => {
+        const btn = document.createElement('button');
+        btn.innerText = idx + 1;
+        btn.className = `flex-1 min-w-[34px] py-1.5 px-2 text-xs font-mono font-semibold rounded-lg border transition ${
+          idx === currentIndex 
+            ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30 ring-2 ring-indigo-400/30' 
+            : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+        }`;
+        btn.addEventListener('click', () => {
+          if (currentIndex !== idx) {
+            currentIndex = idx;
+            renderCard();
+          }
+        });
+        dotGrid.appendChild(btn);
+      });
+    }
+
+    function updatePaginationButtons() {
+      Array.from(dotGrid.children).forEach((child, idx) => {
+        if (idx === currentIndex) {
+          child.className = 'flex-1 min-w-[34px] py-1.5 px-2 text-xs font-mono font-semibold rounded-lg border transition bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30 ring-2 ring-indigo-400/30';
+        } else {
+          child.className = 'flex-1 min-w-[34px] py-1.5 px-2 text-xs font-mono font-semibold rounded-lg border transition bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200';
+        }
+      });
+    }
+
+    // Layar Penuh (Fullscreen untuk Proyektor)
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+        fullscreenIcon.className = "fa-solid fa-compress";
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+          fullscreenIcon.className = "fa-solid fa-expand";
+        }
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        fullscreenIcon.className = "fa-solid fa-expand";
+      } else {
+        fullscreenIcon.className = "fa-solid fa-compress";
+      }
+    });
+
+    cardContainer.addEventListener('click', toggleFlip);
+    btnFlip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFlip();
+    });
+
+    btnNext.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % deck.length;
+      renderCard();
+    });
+
+    btnPrev.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + deck.length) % deck.length;
+      renderCard();
+    });
+
+    btnShuffle.addEventListener('click', shuffleDeck);
+    btnHintToggle.addEventListener('click', toggleHint);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+
+    // Navigasi Keyboard Praktis saat mengajar
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        toggleFlip();
+      } else if (e.code === 'ArrowRight') {
+        currentIndex = (currentIndex + 1) % deck.length;
+        renderCard();
+      } else if (e.code === 'ArrowLeft') {
+        currentIndex = (currentIndex - 1 + deck.length) % deck.length;
+        renderCard();
+      } else if (e.code.toLowerCase() === 'keyh') {
+        toggleHint();
+      }
+    });
+
+    // Jalankan pengacakan kartu saat aplikasi dibuka
+    shuffleDeck();
+  </script>
+</body>
+</html>
